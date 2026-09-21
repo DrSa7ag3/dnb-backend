@@ -77,7 +77,7 @@ export function resolveLimit(value, defaultLimit = DEFAULT_LIMIT, maxLimit = MAX
   if (Number.isNaN(limit) || limit < 1) {
     limit = defaultLimit;
   }
-  if (limit > maxLimit) {
+  if (limit > maxLimit || limit < 1) {
     limit = maxLimit;
   }
   return limit;
@@ -116,7 +116,7 @@ export function formatPaginationMeta({
   return {
     total: typeof total === "number" && !Number.isNaN(total) ? total : null,
     page: typeof page === "number" && page > 0 ? page : null,
-    limit: resolveLimit(limit),
+    limit: resolveLimit(limit, DEFAULT_LIMIT, MAX_LIMIT),
     totalPages: typeof totalPages === "number" && totalPages >= 0 ? totalPages : null,
     offset: typeof offset === "number" && offset >= 0 ? offset : null,
     hasNext: Boolean(hasNext),
@@ -138,7 +138,6 @@ export function formatPaginationMeta({
 export function formatPaginationResponse(data = [], metaParams = {}) {
   const meta = formatPaginationMeta(metaParams);
   const items = Array.isArray(data) ? data : [];
-
   return {
     data: items,
     meta,
@@ -193,8 +192,7 @@ export async function paginateOffset({
   if (typeof executor !== "function") {
     throw new TypeError("paginateOffset: executor function is required");
   }
-
-  const limit = resolveLimit(rawLimit);
+  const limit = resolveLimit(rawLimit, DEFAULT_LIMIT, MAX_LIMIT);
   let page = parseInt(rawPage, 10);
   if (Number.isNaN(page) || page < 1) {
     page = 1;
@@ -293,8 +291,7 @@ export async function paginateCursor({
   if (typeof executor !== "function") {
     throw new TypeError("paginateCursor: executor function is required");
   }
-
-  const limit = resolveLimit(rawLimit);
+  const limit = resolveLimit(rawLimit, DEFAULT_LIMIT, MAX_LIMIT);
   const activeAfter = after || cursor || null;
 
   // Resolve sort order numeric direction

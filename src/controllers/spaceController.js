@@ -1,11 +1,26 @@
 import Space from "../models/Space.js";
 import cloudinary from "../utils/cloudinary.js";
+import { sanitizePagination, getPaginationMeta } from "../utils/pagination.js";
 
 // 📚 Get all spaces
-export const getSpaces = async (_req, res) => {
+export const getSpaces = async (req, res) => {
   try {
-    const spaces = await Space.find().populate("host", "name email avatar");
-    res.status(200).json({ success: true, spaces });
+    const { limit, page } = sanitizePagination(req.query.limit, req.query.page);
+    const skip = (page - 1) * limit;
+
+    const [spaces, total] = await Promise.all([
+      Space.find()
+        .skip(skip)
+        .limit(limit)
+        .populate("host", "name email avatar"),
+      Space.countDocuments(),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      spaces,
+      meta: getPaginationMeta(total, page, limit),
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -138,11 +153,22 @@ export const joinWaitList = async (req, res) => {
 export const getSpacesByHost = async (req, res) => {
   try {
     const { hostId } = req.params;
-    const spaces = await Space.find({ host: hostId }).populate(
-      "host",
-      "name email avatar"
-    );
-    res.status(200).json({ success: true, spaces });
+    const { limit, page } = sanitizePagination(req.query.limit, req.query.page);
+    const skip = (page - 1) * limit;
+
+    const [spaces, total] = await Promise.all([
+      Space.find({ host: hostId })
+        .skip(skip)
+        .limit(limit)
+        .populate("host", "name email avatar"),
+      Space.countDocuments({ host: hostId }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      spaces,
+      meta: getPaginationMeta(total, page, limit),
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

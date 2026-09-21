@@ -2,6 +2,7 @@ import Course from "../models/Course.js";
 import Book from "../models/Book.js";
 import Space from "../models/Space.js";
 import { catchAsync } from "../middlewares/errorHandler.js";
+import { sanitizePagination, getPaginationMeta } from "../utils/pagination.js";
 
 // Public profile fields surfaced on educator cards.
 const CREATOR_FIELDS = "name avatar role bio";
@@ -88,14 +89,14 @@ export const getEducators = catchAsync(async (req, res) => {
     (a, b) => b.total - a.total || a.name.localeCompare(b.name)
   );
 
+  // Apply pagination
+  const { limit, page } = sanitizePagination(req.query.limit, req.query.page);
+  const start = (page - 1) * limit;
+  const paginatedEducators = educators.slice(start, start + limit);
+
   res.status(200).json({
     success: true,
-    data: educators,
-    meta: {
-      educators: roster.length,
-      courses: roster.reduce((sum, e) => sum + e.courses, 0),
-      books: roster.reduce((sum, e) => sum + e.books, 0),
-      spaces: roster.reduce((sum, e) => sum + e.spaces, 0),
-    },
+    data: paginatedEducators,
+    meta: getPaginationMeta(educators.length, page, limit),
   });
 });

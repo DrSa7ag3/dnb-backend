@@ -314,9 +314,15 @@ export const unfollowUser = async (req, res) => {
 export const getFollowers = async (req, res) => {
   try {
     const { userId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
+    const skip = (parseInt(req.query.page, 10) || 0) * limit;
 
     const user = await User.findById(userId)
-      .populate("followers", "name email avatar role bio")
+      .populate({
+        path: "followers",
+        select: "name email avatar role bio",
+        options: { limit, skip },
+      })
       .select("followers");
 
     if (!user) {
@@ -326,10 +332,17 @@ export const getFollowers = async (req, res) => {
       });
     }
 
+    const total = user.followers?.length || 0;
+
     res.status(200).json({
       success: true,
       followers: user.followers,
-      count: user.followers.length,
+      count: total,
+      pagination: {
+        page: parseInt(req.query.page, 10) || 0,
+        pageSize: limit,
+        total,
+      },
     });
   } catch (error) {
     logger.error("Get followers error:", error);
@@ -345,9 +358,15 @@ export const getFollowers = async (req, res) => {
 export const getFollowing = async (req, res) => {
   try {
     const { userId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
+    const skip = (parseInt(req.query.page, 10) || 0) * limit;
 
     const user = await User.findById(userId)
-      .populate("following", "name email avatar role bio")
+      .populate({
+        path: "following",
+        select: "name email avatar role bio",
+        options: { limit, skip },
+      })
       .select("following");
 
     if (!user) {
@@ -357,10 +376,17 @@ export const getFollowing = async (req, res) => {
       });
     }
 
+    const total = user.following?.length || 0;
+
     res.status(200).json({
       success: true,
       following: user.following,
-      count: user.following.length,
+      count: total,
+      pagination: {
+        page: parseInt(req.query.page, 10) || 0,
+        pageSize: limit,
+        total,
+      },
     });
   } catch (error) {
     logger.error("Get following error:", error);

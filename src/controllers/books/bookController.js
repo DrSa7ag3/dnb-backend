@@ -9,6 +9,7 @@ import contentMetricsService from "../../services/analytics/contentMetricsServic
 import { bookService } from "../../services/book.service.js";
 import { createNewBookNotification } from "../notificationController.js";
 import { APIError, catchAsync } from "../../middlewares/errorHandler.js";
+import { PAGINATION } from "../../utils/pagination.js";
 
 // Magic-byte types accepted for the book's text file.
 const BOOK_FILE_MIME_TYPES = ["application/pdf", "application/epub+zip"];
@@ -133,45 +134,34 @@ export const getBooks = async (req, res) => {
     const limitParam = req.query.limit ? parseInt(req.query.limit, 10) : null;
     const isPaginated = pageParam !== null || limitParam !== null;
 
+    const page = Math.max(pageParam || PAGINATION.DEFAULT_PAGE, 1);
+    const limit = Math.min(Math.max(limitParam || PAGINATION.DEFAULT_LIMIT, 1), PAGINATION.MAX_LIMIT);
     const selectFields =
       "_id title author category categoryRef price currency readCount rating numReviews description image audioFileUrl duration createdAt updatedAt";
 
-    if (isPaginated) {
-      const page = Math.max(pageParam || 1, 1);
-      const limit = Math.min(Math.max(limitParam || 20, 1), 100);
-      const skip = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
-      const [books, total] = await Promise.all([
-        Book.find(filter)
-          .select(selectFields)
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          .populate("author", "name avatar bio")
-          .populate("reviews.user", "name avatar")
-          .lean(),
-        Book.countDocuments(filter),
-      ]);
+    const [books, total] = await Promise.all([
+      Book.find(filter)
+        .select(selectFields)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("author", "name avatar bio")
+        .populate("reviews.user", "name avatar")
+        .lean(),
+      Book.countDocuments(filter),
+    ]);
 
-      const hasMore = skip + books.length < total;
-      return res.status(200).json({
-        success: true,
-        page,
-        limit,
-        total,
-        hasMore,
-        data: books,
-      });
-    }
-
-    const books = await Book.find(filter)
-      .select(selectFields)
-      .sort({ createdAt: -1 })
-      .populate("author", "name avatar bio")
-      .populate("reviews.user", "name avatar")
-      .lean();
-
-    res.status(200).json({ success: true, data: books });
+    const hasMore = skip + books.length < total;
+    return res.status(200).json({
+      success: true,
+      page,
+      limit,
+      total,
+      hasMore,
+      data: books,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
