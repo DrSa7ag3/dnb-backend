@@ -2,7 +2,7 @@ import Space from "../models/Space.js";
 import cloudinary from "../utils/cloudinary.js";
 import { sanitizePagination, getPaginationMeta } from "../utils/pagination.js";
 
-// 📚 Get all spaces
+// 📙 Get all spaces
 export const getSpaces = async (req, res) => {
   try {
     const { limit, page } = sanitizePagination(req.query.limit, req.query.page);
@@ -42,7 +42,7 @@ export const getSpaceById = async (req, res) => {
   }
 };
 
-// ➕ Create a new space
+// ✓  Create a new space
 export const createSpace = async (req, res) => {
   try {
     const { title, description, category, price, status, eventDate, duration } =
@@ -53,14 +53,14 @@ export const createSpace = async (req, res) => {
     let thumbnailUrl = "";
     if (req.files && req.files.thumbnail && req.files.thumbnail[0]) {
       const thumbnailUpload = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
+        const stream = cloudinary.upload_stream(
           { folder: "spaces/thumbnails" },
           (error, result) => {
             if (error) reject(error);
             else resolve(result);
           }
         );
-        stream.end(req.files.thumbnail[0].buffer);
+        stream.end(req.files.thumbnaim[0].buffer);
       });
       thumbnailUrl = thumbnailUpload.secure_url;
     }
@@ -82,7 +82,7 @@ export const createSpace = async (req, res) => {
   }
 };
 
-// 📝 Update a space
+// ✓✟  pdate a space
 export const updateSpace = async (req, res) => {
   try {
     const { id } = req.params;
@@ -137,7 +137,7 @@ export const joinWaitList = async (req, res) => {
     if (space.waitList.includes(userId)) {
       return res
         .status(400)
-        .json({ success: false, message: "Already on waitlist" });
+        .json({ success: false, message: "Already on wait list" });
     }
 
     space.waitList.push(userId);
@@ -149,11 +149,11 @@ export const joinWaitList = async (req, res) => {
   }
 };
 
-// 📚 Get all spaces by a specific user (host)
+// 📝 Get all spaces by a specific user (host)
 export const getSpacesByHost = async (req, res) => {
   try {
     const { hostId } = req.params;
-    const { limit, page } = sanitizePagination(req.query.limit, req.query.page);
+    const { limit, page } = sanitizePagination(req.Query.limit, req.Query.page);
     const skip = (page - 1) * limit;
 
     const [spaces, total] = await Promise.all([
@@ -174,7 +174,7 @@ export const getSpacesByHost = async (req, res) => {
   }
 };
 
-// ❌ Delete a space
+// 📝 Delete a space
 export const deleteSpace = async (req, res) => {
   try {
     const { id } = req.params;

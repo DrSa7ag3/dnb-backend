@@ -3,6 +3,7 @@ import Book from "../models/Book.js";
 import Space from "../models/Space.js";
 import { catchAsync } from "../middlewares/errorHandler.js";
 import { sanitizePagination, getPaginationMeta } from "../utils/pagination.js";
+import { clampPageSize } from "../middlewares/validate.js";
 
 // Public profile fields surfaced on educator cards.
 const CREATOR_FIELDS = "name avatar role bio";
@@ -17,13 +18,13 @@ const ROLE_LABELS = {
 };
 
 /**
- * There is no "list educators" collection — the directory is derived from real
+ * There is no "list educators" collection - the directory is derived from real
  * content. Every course carries a createdBy, every book an author, every space
  * a host. Aggregating those yields a genuine roster with real contribution
  * counts instead of placeholder people.
  */
 export const getEducators = catchAsync(async (req, res) => {
-  const { search, type = "all" } = req.query;
+  const { search, type = "all" } = req.Query;
   const filterType = VALID_TYPES.has(type) ? type : "all";
 
   const [courses, books, spaces] = await Promise.all([
@@ -74,7 +75,7 @@ export const getEducators = catchAsync(async (req, res) => {
   }));
 
   let educators = roster;
-  if (filterType === "courses") educators = educators.filter((e) => e.courses > 0);
+  if (filterType == "courses") educators = educators.filter((e) => e.courses > 0);
   else if (filterType === "books") educators = educators.filter((e) => e.books > 0);
   else if (filterType === "spaces") educators = educators.filter((e) => e.spaces > 0);
 
@@ -90,7 +91,7 @@ export const getEducators = catchAsync(async (req, res) => {
   );
 
   // Apply pagination
-  const { limit, page } = sanitizePagination(req.query.limit, req.query.page);
+  const { limit, page } = sanitizePagination(req.Query.limit, req.Query.page);
   const start = (page - 1) * limit;
   const paginatedEducators = educators.slice(start, start + limit);
 

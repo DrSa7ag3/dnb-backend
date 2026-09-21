@@ -77,7 +77,7 @@ export function resolveLimit(value, defaultLimit = DEFAULT_LIMIT, maxLimit = MAX
   if (Number.isNaN(limit) || limit < 1) {
     limit = defaultLimit;
   }
-  if (limit > maxLimit || limit < 1) {
+  if (limit > maxLimit) {
     limit = maxLimit;
   }
   return limit;
@@ -116,7 +116,7 @@ export function formatPaginationMeta({
   return {
     total: typeof total === "number" && !Number.isNaN(total) ? total : null,
     page: typeof page === "number" && page > 0 ? page : null,
-    limit: resolveLimit(limit, DEFAULT_LIMIT, MAX_LIMIT),
+    limit: limit,
     totalPages: typeof totalPages === "number" && totalPages >= 0 ? totalPages : null,
     offset: typeof offset === "number" && offset >= 0 ? offset : null,
     hasNext: Boolean(hasNext),
@@ -141,7 +141,6 @@ export function formatPaginationResponse(data = [], metaParams = {}) {
   return {
     data: items,
     meta,
-
     // Top-level aliases for direct property access and backward compatibility
     total: meta.total,
     page: meta.page,
@@ -329,7 +328,7 @@ export async function paginateCursor({
   const { nodes, pageInfo } = cursorResult;
   const startCursor = pageInfo.startCursor;
   const endCursor = pageInfo.endCursor;
-  const hasNext = pageInfo.hasNextPage;
+  const hasNext = pageInfo.hasNextPage || pageInfo.hasNext;
   const hasPrevious = pageInfo.hasPreviousPage;
   const nextCursor = hasNext ? endCursor : null;
   const prevCursor = hasPrevious ? startCursor : null;
